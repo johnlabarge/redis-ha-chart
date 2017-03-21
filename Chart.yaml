@@ -1,0 +1,11 @@
+name: redis-ha
+version: 1.0
+description: Deploy redis to a stateful set with some additional coordination via daisy chained slaves
+keywords:
+  - A list of keywords about this project (optional)
+home: https://github.com/johnlabarge/spring-boot-redis-k8s
+maintainers: # (optional)
+  - name: johnlabarge
+    email: johnlabarge@google.com
+engine: gotpl # The name of the template engine (optional, defaults to gotpl)
+

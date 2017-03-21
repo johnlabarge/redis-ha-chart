@@ -1,0 +1,50 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: "{{ .Chart.Name }}-master"
+spec:
+  serviceName: redis-master-ha
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "{{ .Chart.Name }}-master"
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+        component: redis-cache
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        env:
+        - name: TYPEhelm 
+          value: MASTER
+        ports:
+        - name: redis-master
+          containerPort: 6379
+        livenessProbe: 
+          exec:
+            command:
+            - redis-cli 
+            - ping
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe: 
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          timeoutSeconds: 1 
+        resources:
+        {{ toYaml .Values.resources | indent 10 }}
+        volumeMounts:
+        - mountPath: /var/redis-data
+          name: redis-data
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: "{{ .Chart.Name }}-master"

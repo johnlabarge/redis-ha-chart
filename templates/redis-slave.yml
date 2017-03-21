@@ -1,0 +1,56 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: "{{ .Chart.Name }}-slave"
+spec:
+  serviceName: redis-slave-ha
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: "{{ .Chart.Name }}-slave"
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+        component: redis-cache
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: "{{ .Chart.Name }}-slave"
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        env:
+        - name: TYPE
+          value: SLAVE
+        - name: MASTER 
+          value: redis-master-ha
+        ports:
+        - name: redis-master
+          containerPort: 6379
+        livenessProbe: 
+          exec:
+            command:
+            - redis-cli 
+            - ping
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe: 
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          timeoutSeconds: 1 
+        resources:
+        {{ toYaml .Values.resources | indent 10 }}
+        volumeMounts:
+        - mountPath: /var/redis-data
+          name: redis-slave-data
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-slave-data
+    spec: 
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi

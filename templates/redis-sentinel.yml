@@ -1,0 +1,29 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: "{{ .Chart.Name }}-sentinel"
+spec:
+  serviceName: redis-sentinel-ha
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: "{{ .Chart.Name }}-sentinel"
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+        component: redis-cache
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: "{{ .Chart.Name }}-sentinel"
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        env:
+        - name: TYPE
+          value: SENTINEL
+        - name: MASTER
+          value: redis-master-ha
+        ports:
+        - containerPort: 26379
+          name: redis-sentinel
